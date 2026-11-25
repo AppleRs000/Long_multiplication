@@ -190,3 +190,15 @@ h2.sec{font-size:1.1rem;margin:0 0 8px;color:#7a5b1f}
   .form.print .digit{font-size:6.5mm}
   .ansPage{break-before:page}
 }
+
+/* v2 追加 */
+h1 .logo{width:1.5em;height:1.5em;vertical-align:-.35em;margin-right:.3em;border-radius:22%}
+.hintrow{text-align:center;margin-top:6px}
+.hintrow .tool{min-height:40px;font-size:.95rem}
+.hintrow .tool:disabled{opacity:.45}
+.hintbox{margin-top:8px;background:#fff9d6;border-radius:12px;padding:8px 12px;font-size:.95rem}
+.hintbox ol{margin:0;padding-left:1.3em;line-height:1.6}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #1f8a50}
+.feedback .fixmsg{margin-top:8px;font-weight:bold;font-size:1.05rem}
+.cell.fixable{outline:3px dashed var(--red);outline-offset:1px;background:#fff}
+.cell.fixable.active{outline:4px solid var(--main)}

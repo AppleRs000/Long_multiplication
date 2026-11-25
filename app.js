@@ -48,8 +48,40 @@
     try { localStorage.setItem(SK, JSON.stringify(store)); } catch (e) { /* 保存できない環境 */ }
   }
   let store = loadStore();
-  const settings = Object.assign({ type: '21', n: 10, carry: 'any', mode: 'each', limit: 0 }, store.settings);
+  const settings = Object.assign({ type: '21', n: 10, carry: 'any', mode: 'each', limit: 0, sound: 1 }, store.settings);
   function saveSettings() { store.settings = Object.assign({}, settings); saveStore(); }
+
+  /* ========== 効果音（Web Audio・ファイル不要） ========== */
+  let actx = null;
+  const SFX = {
+    ok: [[784, 0, 0.14], [1047, 0.13, 0.3]],
+    ng: [[330, 0, 0.18], [262, 0.17, 0.32]],
+    perfect: [[523, 0, 0.14], [659, 0.13, 0.14], [784, 0.26, 0.14], [1047, 0.39, 0.14], [784, 0.52, 0.12], [1047, 0.64, 0.55]]
+  };
+  function sfx(kind) {
+    if (!settings.sound) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+      const t0 = actx.currentTime + 0.02;
+      (SFX[kind] || []).forEach((n) => {
+        const o = actx.createOscillator();
+        const g = actx.createGain();
+        const st = t0 + n[1];
+        o.type = kind === 'ng' ? 'triangle' : 'sine';
+        o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(0.25, st + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + n[2]);
+        o.connect(g);
+        g.connect(actx.destination);
+        o.start(st);
+        o.stop(st + n[2] + 0.05);
+      });
+    } catch (e) { /* 音が出せない環境では何もしない */ }
+  }
 
   /* ========== 問題づくり ========== */
   // くり上がり：途中の位で次の位にくり上がるか
@@ -126,6 +158,28 @@
     return out;
   }
 
+  // ヒント：答えは言わずに、つぎに何を計算するかを1行ずつ出す
+  function hints(a, b) {
+    const out = [];
+    const A = digitsOf(a).reverse();
+    const bd = digitsOf(b).reverse();
+    bd.forEach((m, k) => {
+      if (bd.length > 1) {
+        out.push('まず ' + a + ' × ' + m + ' を計算するよ（かける数の' + PL[k] + 'の位）' +
+          (k > 0 ? '。答えは一つ左にずらして書こう' : ''));
+      }
+      let c = 0;
+      A.forEach((d, j) => {
+        const p = d * m + c;
+        out.push((j === 0 && bd.length === 1 ? 'まず ' : '') + PL[j] + 'の位：' + d + ' × ' + m +
+          (c ? ' + ' + c + '（くり上がり）' : '') + ' を計算しよう');
+        c = Math.floor(p / 10);
+      });
+    });
+    if (bd.length > 1) out.push('できた2つの答えを たし算しよう');
+    return out;
+  }
+
   function stepsOl(a, b) {
     const ol = el('ol');
     steps(a, b).forEach((s) => ol.appendChild(el('li', null, s)));
@@ -164,7 +218,8 @@
     r++;
     for (let i = 0; i < A.length; i++) put(el('div', 'digit', A[i]), r, N - A.length + 1 + i);
     r++;
-    put(el('div', 'digit op', '×'), r, N - B.length);
+    // 「×」はかけられる数の左斜め下（かけ算の筆算の正しい書き方）
+    put(el('div', 'digit op', '×'), r, N - A.length);
     for (let i = 0; i < B.length; i++) put(el('div', 'digit', B[i]), r, N - B.length + 1 + i);
     r++;
     put(el('div', 'hline'), r, 1, N);
@@ -194,7 +249,8 @@
     return {
       a: p.a, b: p.b, P: String(p.a * p.b),
       data: { memo: [], p0: [], p1: [], ans: [] },
-      judged: false, correct: false, got: '', img: null
+      judged: false, correct: false, got: '', img: null,
+      hintN: 0, fixing: false, fixDone: false
     };
   }
 
@@ -217,6 +273,7 @@
       retry: !!opt.retry,
       finished: false,
       timerId: null,
+      pausedAt: null,
       cells: null,
       order: [],
       key: settings.type + '|' + problems.length + '|' + settings.carry,
@@ -233,18 +290,28 @@
   function stopTimer() {
     if (G && G.timerId) { clearInterval(G.timerId); G.timerId = null; }
   }
+  // 「こたえあわせ」後は「つぎへ」を押すまでタイマーを止める
+  function nowEff() { return G.pausedAt || Date.now(); }
   function tick() {
     if (!G || G.finished) return;
-    const e = (Date.now() - G.start) / 1000;
+    const e = (nowEff() - G.start) / 1000;
     const t = $('#timer');
+    const mark = G.pausedAt ? '⏸ ' : '';
     if (G.limit) {
       const rem = Math.max(0, G.limit - e);
-      t.textContent = '⏳ のこり ' + fmtClock(rem);
-      t.classList.toggle('warn', rem <= 30);
+      t.textContent = (G.pausedAt ? '⏸ ' : '⏳ ') + 'のこり ' + fmtClock(rem);
+      t.classList.toggle('warn', rem <= 30 && !G.pausedAt);
       if (rem <= 0) finish(true);
     } else {
-      t.textContent = '⏱ ' + fmtClock(e);
+      t.textContent = (mark || '⏱ ') + fmtClock(e);
       t.classList.remove('warn');
+    }
+  }
+  function resumeTimer() {
+    if (G && G.pausedAt) {
+      G.start += Date.now() - G.pausedAt;
+      G.pausedAt = null;
+      tick();
     }
   }
   function startTimer() {
@@ -272,12 +339,17 @@
     ['memo', 'p0', 'p1', 'ans'].forEach((k) => {
       G.cells[k].forEach((c, i) => {
         if (it.data[k][i]) c.textContent = it.data[k][i];
-        c.addEventListener('click', () => setActive(c));
+        c.addEventListener('click', () => {
+          const cur = G.items[G.idx];
+          if (cur.judged && !c.classList.contains('fixable')) return;
+          setActive(c);
+        });
       });
     });
 
-    G.order = [].concat(G.cells.p0.slice().reverse(), G.cells.p1.slice().reverse(), G.cells.ans.slice().reverse());
-    const firstEmpty = G.order.find((c) => !c.textContent) || G.order[G.order.length - 1];
+    // 大きい位（左）から入力する
+    G.order = [].concat(G.cells.p0, G.cells.p1, G.cells.ans);
+    const firstEmpty = G.cells.ans.find((c) => !c.textContent) || G.cells.ans[G.cells.ans.length - 1];
     setActive(firstEmpty);
 
     initCanvas(it.img);
@@ -286,7 +358,32 @@
     fb.className = 'feedback hidden';
     fb.innerHTML = '';
     if (it.judged) showJudged(it);
+    renderHints(it);
     updateButtons();
+  }
+
+  function renderHints(it) {
+    const hs = hints(it.a, it.b);
+    const box = $('#hintBox');
+    box.innerHTML = '';
+    if (it.hintN > 0) {
+      const ol = el('ol');
+      hs.slice(0, it.hintN).forEach((s) => ol.appendChild(el('li', null, s)));
+      box.appendChild(ol);
+    }
+    box.classList.toggle('hidden', it.hintN === 0 || it.judged);
+    const btn = $('#btnHint');
+    const more = it.hintN < hs.length;
+    btn.disabled = !more;
+    btn.textContent = it.hintN === 0 ? '💡 ヒント' : (more ? '💡 つぎのヒント' : '💡 ヒントは ここまで');
+    btn.classList.toggle('hidden', it.judged);
+  }
+
+  function showHint() {
+    const it = G.items[G.idx];
+    if (it.judged) return;
+    if (it.hintN < hints(it.a, it.b).length) it.hintN++;
+    renderHints(it);
   }
 
   function setActive(c) {
@@ -316,19 +413,82 @@
     const it = G.items[G.idx];
     const last = G.idx === G.items.length - 1;
     const prev = $('#btnPrev'), chk = $('#btnCheck'), next = $('#btnNext');
+    const fix = $('#btnFix'), re = $('#btnRecheck');
     if (G.mode === 'each') {
       prev.classList.add('hidden');
       chk.classList.toggle('hidden', it.judged);
+      fix.classList.toggle('hidden', !(it.judged && !it.correct && !it.fixing && !it.fixDone));
+      re.classList.toggle('hidden', !it.fixing);
       next.classList.toggle('hidden', !it.judged);
       next.textContent = last ? 'けっかを見る ▶' : 'つぎへ ▶';
-      $('.actions').style.gridTemplateColumns = '1fr';
     } else {
       prev.classList.toggle('hidden', G.idx === 0);
       chk.classList.add('hidden');
+      fix.classList.add('hidden');
+      re.classList.add('hidden');
       next.classList.remove('hidden');
       next.textContent = last ? 'おわり（こたえあわせ） ▶' : 'つぎへ ▶';
-      $('.actions').style.gridTemplateColumns = G.idx === 0 ? '1fr' : '1fr 1.6fr';
     }
+    const vis = [prev, chk, fix, re, next].filter((b) => !b.classList.contains('hidden')).length;
+    $('.actions').style.gridTemplateColumns = 'repeat(' + Math.max(1, vis) + ', 1fr)';
+  }
+
+  /* ---------- 直し（×のあと、赤いマスだけ入力しなおす） ---------- */
+  function fixMsg(text) {
+    const fb = $('#feedback');
+    let m = fb.querySelector('.fixmsg');
+    if (!m) { m = el('div', 'fixmsg'); fb.appendChild(m); }
+    m.textContent = text;
+  }
+
+  function startFix() {
+    const it = G.items[G.idx];
+    if (!it.judged || it.correct || it.fixing) return;
+    it.fixing = true;
+    const fixable = [];
+    ['p0', 'p1', 'ans'].forEach((k) => {
+      G.cells[k].forEach((c) => {
+        if (c.classList.contains('ng')) {
+          c.classList.remove('ng');
+          c.classList.add('fixable');
+          c.textContent = '';
+          fixable.push(c);
+        }
+      });
+    });
+    G.order = fixable;
+    setActive(fixable[0] || null);
+    fixMsg('赤かったところを 入力しなおして、「なおして こたえあわせ」を押そう');
+    updateButtons();
+  }
+
+  function recheck() {
+    const it = G.items[G.idx];
+    if (!it.fixing) return;
+    let allOk = true;
+    ['p0', 'p1', 'ans'].forEach((k) => {
+      G.cells[k].forEach((c) => {
+        if (!c.classList.contains('fixable')) return;
+        const good = c.textContent === c.dataset.exp;
+        if (good) { c.classList.remove('fixable', 'ng'); c.classList.add('ok'); }
+        else if (k === 'ans' || c.textContent) { c.classList.add('ng'); if (k === 'ans') allOk = false; }
+      });
+    });
+    if (allOk) {
+      it.fixing = false;
+      it.fixDone = true;
+      G.order = [];
+      setActive(null);
+      fixMsg('🎉 なおせたね！ 同じまちがいは もうしないね');
+      sfx('ok');
+    } else {
+      G.order = [].concat(G.cells.p0, G.cells.p1, G.cells.ans).filter((c) => c.classList.contains('fixable'));
+      const firstBad = G.order.find((c) => c.classList.contains('ng')) || G.order[0];
+      setActive(firstBad || null);
+      fixMsg('まだ ちがうところがあるよ。やり方を見ながら もういちど！');
+      sfx('ng');
+    }
+    updateButtons();
   }
 
   /* ---------- 判定 ---------- */
@@ -378,18 +538,23 @@
     if (it.judged) return;
     collect();
     judgeItem(it);
+    G.pausedAt = Date.now();
+    tick();
     if (it.correct) G.streak++; else G.streak = 0;
     const s = $('#streak');
     if (G.streak >= 2) { s.textContent = '🔥 れんぞく ' + G.streak; s.classList.remove('hidden'); }
     else s.classList.add('hidden');
     showJudged(it);
+    sfx(it.correct ? 'ok' : 'ng');
     saveStore();
+    renderHints(it);
     updateButtons();
   }
 
   function goNext() {
     const last = G.idx === G.items.length - 1;
     collect();
+    resumeTimer();
     if (last) { finish(false); return; }
     G.idx++;
     renderProblem();
@@ -405,7 +570,7 @@
   function press(k) {
     if (!G || G.finished || !active) return;
     const it = G.items[G.idx];
-    if (it.judged) return;
+    if (it.judged && !active.classList.contains('fixable')) return;
     if (k === 'bs') {
       if (active.textContent) active.textContent = '';
       else { moveActive(-1); if (active) active.textContent = ''; }
@@ -424,7 +589,7 @@
     if (!timeUp) { /* 現在の問題はすでに collect 済み */ }
     else collect();
 
-    const elapsed = (Date.now() - G.start) / 1000;
+    const elapsed = (nowEff() - G.start) / 1000;
     const sec = G.limit ? Math.min(elapsed, G.limit) : elapsed;
 
     G.items.forEach((it) => { if (!it.judged) judgeItem(it); });
@@ -456,6 +621,7 @@
     saveStore();
 
     renderResult({ score, n, sec, perfect, newBest, stamp, maxRun, timeUp });
+    if (perfect) sfx('perfect');
   }
 
   function renderResult(r) {
@@ -499,6 +665,8 @@
       const d = el('div', 'ritem ' + (it.correct ? 'ok' : 'ng'));
       d.appendChild(el('span', 'mark', it.correct ? '○' : '×'));
       d.appendChild(el('span', null, '(' + (i + 1) + ') ' + it.a + ' × ' + it.b + ' = ' + it.P));
+      if (it.hintN > 0) d.appendChild(el('span', null, '　💡ヒント ' + it.hintN + '回'));
+      if (!it.correct && it.fixDone) d.appendChild(el('span', null, '　✏️ なおせた'));
       if (!it.correct) {
         d.appendChild(el('div', null, 'あなたの答え：' + (it.got.replace(/ /g, '') || '（書いていない）')));
         const det = el('details');
@@ -602,6 +770,7 @@
     buildChips('chips-carry', [['any', 'どちらも'], ['yes', 'くり上がりあり'], ['no', 'くり上がりなし']], 'carry');
     buildChips('chips-mode', [['each', '1問ずつ'], ['end', 'さいごにまとめて']], 'mode');
     buildChips('chips-limit', [[0, 'なし'], [180, '3分'], [300, '5分'], [600, '10分']], 'limit');
+    buildChips('chips-sound', [[1, 'あり 🔊'], [0, 'なし 🔇']], 'sound');
 
     const mc = store.mistakes.length;
     const rb = $('#btnRetryMistakes');
@@ -772,6 +941,17 @@
     if (confirm('れんしゅうを やめてホームにもどりますか？（ここまでの記録は のこりません）')) goHome();
   };
   $('#btnCheck').onclick = checkNow;
+  $('#btnFix').onclick = startFix;
+  $('#btnRecheck').onclick = recheck;
+  $('#btnHint').onclick = showHint;
+  function updateSoundBtn() { $('#btnSound').textContent = settings.sound ? '🔊' : '🔇'; }
+  $('#btnSound').onclick = () => {
+    settings.sound = settings.sound ? 0 : 1;
+    saveSettings();
+    updateSoundBtn();
+    sfx('ok');
+  };
+  updateSoundBtn();
   $('#btnNext').onclick = goNext;
   $('#btnPrev').onclick = goPrev;
   document.querySelectorAll('#numpad button').forEach((b) => {
@@ -782,15 +962,24 @@
     if ($('#screen-play').classList.contains('hidden') || !G || G.finished) return;
     if (e.key >= '0' && e.key <= '9') { press(e.key); e.preventDefault(); }
     else if (e.key === 'Backspace') { press('bs'); e.preventDefault(); }
-    else if (e.key === 'ArrowLeft') { moveActive(1); e.preventDefault(); }
-    else if (e.key === 'ArrowRight') { moveActive(-1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { moveActive(-1); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { moveActive(1); e.preventDefault(); }
     else if (e.key === 'Enter') {
       const it = G.items[G.idx];
-      if (G.mode === 'each' && !it.judged) checkNow(); else goNext();
+      if (it.fixing) recheck();
+      else if (G.mode === 'each' && !it.judged) checkNow();
+      else goNext();
       e.preventDefault();
     }
   });
 
   renderHome();
   showScreen('home');
+
+  // ホーム画面に追加／オフライン用
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* 登録できなくても通常どおり使える */ });
+    });
+  }
 })();
