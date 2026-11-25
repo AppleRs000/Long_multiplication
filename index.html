@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>かけ算ひっ算 れんしゅう</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ホーム -->
+<section id="screen-home" class="screen">
+  <h1>✏️ かけ算ひっ算 れんしゅう</h1>
+
+  <div class="card">
+    <div class="group"><h3>けた数</h3><div class="chips" id="chips-type"></div></div>
+    <div class="group"><h3>もんだい数</h3><div class="chips" id="chips-n"></div></div>
+    <div class="group"><h3>くり上がり</h3><div class="chips" id="chips-carry"></div></div>
+    <div class="group"><h3>こたえあわせ</h3><div class="chips" id="chips-mode"></div></div>
+    <div class="group"><h3>せいげん時間</h3><div class="chips" id="chips-limit"></div></div>
+    <button id="btnStart" class="btn big">▶ スタート！</button>
+  </div>
+
+  <div class="card">
+    <button id="btnRetryMistakes" class="btn blue">📝 まちがえた問題だけ れんしゅう</button>
+    <div class="row2">
+      <button id="btnGoPrint" class="btn gray">🖨 プリントをつくる</button>
+      <button id="btnGoRecords" class="btn gray">📈 きろく</button>
+    </div>
+  </div>
+
+  <div class="card" id="stampCard">
+    <h3 class="stamph">🌟 スタンプちょう</h3>
+    <div id="stampBox" class="stampbox"></div>
+  </div>
+</section>
+
+<!-- 出題 -->
+<section id="screen-play" class="screen hidden">
+  <div class="topbar">
+    <button id="btnQuit" class="small">← やめる</button>
+    <span id="progress" class="pill"></span>
+    <span id="timer" class="pill"></span>
+    <span id="streak" class="pill hidden"></span>
+  </div>
+
+  <div class="workarea">
+    <div class="card formcard">
+      <div id="formHolder"></div>
+      <div id="feedback" class="feedback hidden"></div>
+    </div>
+    <div class="card scratchcard">
+      <div class="tools">
+        <span class="toollabel">けいさんスペース</span>
+        <button class="tool on" data-tool="pen">✏️ くろ</button>
+        <button class="tool" data-tool="red">🖍 あか</button>
+        <button class="tool" data-tool="eraser">🧽 けす</button>
+        <button class="tool" data-tool="clear">🗑 ぜんぶ</button>
+      </div>
+      <canvas id="scratch" width="640" height="360"></canvas>
+    </div>
+  </div>
+
+  <div class="numpad" id="numpad">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="bs" class="fn">⌫</button>
+    <button data-k="6">6</button><button data-k="7">7</button><button data-k="8">8</button>
+    <button data-k="9">9</button><button data-k="0">0</button><button data-k="next" class="fn">→</button>
+  </div>
+
+  <div class="actions">
+    <button id="btnPrev" class="btn gray">◀ まえへ</button>
+    <button id="btnCheck" class="btn">○× こたえあわせ</button>
+    <button id="btnNext" class="btn blue">つぎへ ▶</button>
+  </div>
+</section>
+
+<!-- 結果 -->
+<section id="screen-result" class="screen hidden">
+  <h1>🎉 けっか</h1>
+  <div id="resultBody"></div>
+</section>
+
+<!-- 記録 -->
+<section id="screen-records" class="screen hidden">
+  <h1>📈 きろく</h1>
+  <div id="recordsBody"></div>
+  <button id="btnRecBack" class="btn gray">← ホームへ</button>
+  <button id="btnRecReset" class="btn danger">きろくを ぜんぶ けす</button>
+</section>
+
+<!-- 印刷 -->
+<section id="screen-print" class="screen hidden">
+  <div class="noprint">
+    <h1>🖨 プリントをつくる</h1>
+    <div class="card">
+      <p class="note">ホームで選んだ「けた数」「くり上がり」でプリントを作ります。</p>
+      <div class="group"><h3>もんだい数</h3><div class="chips" id="chips-pn"></div></div>
+      <label class="check"><input type="checkbox" id="chkAnswer" checked> 答えのページもつける</label>
+      <div class="row2">
+        <button id="btnPrintRegen" class="btn gray">🔄 べつの問題にする</button>
+        <button id="btnPrintDo" class="btn">🖨 いんさつする</button>
+      </div>
+      <button id="btnPrintBack" class="btn gray">← ホームへ</button>
+    </div>
+  </div>
+  <div id="printSheet"></div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

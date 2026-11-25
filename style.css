@@ -1,0 +1,192 @@
+:root{
+  --bg:#fff8e7; --card:#ffffff; --ink:#2b2b2b;
+  --main:#ff8a3d; --main-d:#e06a1b;
+  --blue:#3b8ef0; --blue-d:#2470d0;
+  --green:#2fb36b; --red:#e5484d;
+  --line:#f0d9a8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Meiryo",system-ui,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:18px;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.hidden{display:none!important}
+.screen{max-width:920px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.5rem;text-align:center;margin:8px 0 14px;color:var(--main-d)}
+.card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 3px 0 #ecd9aa;margin-bottom:14px}
+.note{margin:0 0 10px;font-size:.9rem;color:#7a5b1f}
+
+.group{margin-bottom:12px}
+.group h3{margin:0 0 6px;font-size:1rem;color:#7a5b1f}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  border:2px solid var(--line);background:#fff;border-radius:999px;
+  padding:8px 14px;font-size:1rem;font-family:inherit;min-height:44px;cursor:pointer;color:var(--ink);
+}
+.chip.on{background:var(--main);border-color:var(--main-d);color:#fff;font-weight:bold}
+
+.btn{
+  display:block;width:100%;border:none;border-radius:14px;padding:12px 10px;
+  font-family:inherit;font-size:1.1rem;font-weight:bold;color:#fff;background:var(--main);
+  box-shadow:0 4px 0 var(--main-d);cursor:pointer;margin-top:10px;min-height:52px;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--main-d)}
+.btn.big{font-size:1.4rem;min-height:64px}
+.btn.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-d)}
+.btn.gray{background:#8a8f98;box-shadow:0 4px 0 #6b7078}
+.btn.danger{background:#c9545a;box-shadow:0 4px 0 #a03a40;margin-top:24px}
+.btn:disabled{opacity:.4;cursor:default}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:block;margin:6px 0 4px;font-size:1rem}
+.check input{width:20px;height:20px;vertical-align:-3px;margin-right:6px}
+
+/* スタンプ */
+.stamph{margin:0 0 6px;font-size:1rem;color:#7a5b1f}
+.stampbox{font-size:1.8rem;line-height:1.5;min-height:2rem;word-break:break-all}
+.stampbox .none{font-size:.9rem;color:#999}
+
+/* 出題画面 */
+.topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.topbar .small{
+  border:none;background:#fff;border-radius:10px;padding:8px 12px;font-family:inherit;font-size:.95rem;
+  box-shadow:0 2px 0 #ddd;cursor:pointer;min-height:40px;
+}
+.pill{background:#fff;border-radius:999px;padding:6px 14px;font-weight:bold;box-shadow:0 2px 0 #ddd}
+#timer.warn{background:#ffe1e1;color:var(--red)}
+#streak{background:#fff0d4;color:var(--main-d)}
+
+.workarea{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:800px){.workarea{grid-template-columns:1fr 1fr}}
+.workarea .card{margin-bottom:0}
+
+/* 筆算フォーム */
+.form{
+  --cell:min(12vw,3.2rem);
+  display:grid;grid-template-columns:repeat(var(--n),var(--cell));
+  justify-content:center;column-gap:4px;row-gap:4px;margin:6px auto;
+}
+.digit{
+  height:var(--cell);display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell)*.8);font-weight:700;font-variant-numeric:tabular-nums;
+}
+.digit.op{color:var(--main-d)}
+.hline{height:0;border-top:4px solid #333;margin:2px 0;align-self:center}
+.cell{
+  height:var(--cell);border:3px solid var(--blue);border-radius:10px;background:#f3f8ff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell)*.75);font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer;
+}
+.cell.p0,.cell.p1{border:2px dashed #9aa7bd;background:#f8f8fb}
+.cell.memo{
+  height:calc(var(--cell)*.55);border:2px dashed #c9c9c9;background:#fffdf5;border-radius:6px;
+  font-size:calc(var(--cell)*.42);color:#777;
+}
+.cell.active{outline:4px solid var(--main);outline-offset:1px;background:#fff6e8}
+.cell.ok{border-color:var(--green);background:#e9f9f0;color:#16744a}
+.cell.ng{border-color:var(--red);background:#ffecec;color:var(--red)}
+.cell.p0.ok,.cell.p1.ok{border-style:solid}
+.cell.p0.ng,.cell.p1.ng{border-style:solid}
+.formlabel{text-align:center;font-size:.8rem;color:#8a8f98;margin:2px 0}
+
+/* フィードバック */
+.feedback{margin-top:10px;border-radius:14px;padding:10px 12px}
+.feedback.ok{background:#e9f9f0;color:#16744a}
+.feedback.ng{background:#fff1f1;color:#a62b30}
+.feedback .big{font-size:1.5rem;font-weight:bold;animation:pop .35s ease-out}
+.feedback ol{margin:6px 0 0;padding-left:1.3em;font-size:.95rem;color:#333;line-height:1.55}
+.feedback .exp{font-size:1.1rem;margin-top:2px}
+
+/* けいさんスペース */
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.toollabel{font-weight:bold;font-size:.9rem;color:#7a5b1f;margin-right:4px}
+.tool{
+  border:2px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;
+  font-family:inherit;font-size:.9rem;cursor:pointer;min-height:38px;
+}
+.tool.on{background:#333;color:#fff;border-color:#333}
+#scratch{
+  width:100%;height:auto;aspect-ratio:16/9;display:block;border-radius:12px;border:2px solid var(--line);
+  background-color:#fff;
+  background-image:linear-gradient(#e8eefc 1px,transparent 1px),linear-gradient(90deg,#e8eefc 1px,transparent 1px);
+  background-size:28px 28px;touch-action:none;
+}
+@media (max-width:799px){#scratch{aspect-ratio:2/1}}
+
+/* テンキー */
+.numpad{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px auto 0;max-width:520px;
+}
+.numpad button{
+  border:none;border-radius:12px;background:#fff;box-shadow:0 3px 0 #d9c28a;
+  font-size:1.6rem;font-weight:bold;font-family:inherit;min-height:56px;cursor:pointer;color:var(--ink);
+}
+.numpad button:active{transform:translateY(2px);box-shadow:0 1px 0 #d9c28a}
+.numpad button.fn{background:#ffe2c4}
+.actions{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;margin-top:12px}
+.actions .btn{margin-top:0;font-size:1rem;padding:10px 6px}
+
+/* 結果 */
+.score{text-align:center}
+.score .num{font-size:3rem;font-weight:bold;color:var(--main-d)}
+.score .sub{font-size:1.05rem;margin:2px 0}
+.praise{
+  text-align:center;background:#fff3c4;border-radius:16px;padding:12px;margin-bottom:14px;
+  font-size:1.2rem;font-weight:bold;animation:pop .5s ease-out;
+}
+.praise .stampbig{font-size:4rem;display:block;animation:spin .8s ease-out}
+.ritem{border-radius:12px;padding:8px 10px;margin:8px 0;background:#f6f6f6}
+.ritem.ok{background:#e9f9f0}
+.ritem.ng{background:#fff1f1}
+.ritem .mark{font-weight:bold;font-size:1.3rem;margin-right:8px}
+.ritem.ok .mark{color:var(--green)}
+.ritem.ng .mark{color:var(--red)}
+.ritem details{margin-top:6px}
+.ritem summary{cursor:pointer;color:var(--blue-d);font-weight:bold}
+.ritem ol{margin:6px 0 0;padding-left:1.3em;font-size:.95rem;line-height:1.55}
+
+/* 記録 */
+.chart{display:flex;align-items:flex-end;gap:6px;height:140px;padding:6px 0;border-bottom:2px solid #ddd}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.7rem}
+.bar .fill{width:100%;max-width:36px;background:var(--main);border-radius:6px 6px 0 0;min-height:2px}
+.bar.perfect .fill{background:var(--green)}
+.bar .lab{margin-top:2px;color:#666;white-space:nowrap}
+.rtable{width:100%;border-collapse:collapse;font-size:.85rem}
+.rtable th,.rtable td{padding:6px 4px;border-bottom:1px solid #eee;text-align:left}
+.bestli{margin:6px 0;padding-left:1.2em;font-size:.95rem;line-height:1.6}
+h2.sec{font-size:1.1rem;margin:0 0 8px;color:#7a5b1f}
+
+/* 印刷プレビュー */
+#printSheet{max-width:920px;margin:0 auto}
+.psheet{background:#fff;padding:10px;margin-bottom:14px;border-radius:8px}
+.phead{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #333;padding-bottom:4px;margin-bottom:8px;font-size:.9rem}
+.phead b{font-size:1.1rem}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.pitem{border:1px dashed #bbb;padding:6px;border-radius:6px;break-inside:avoid}
+.pnum{font-size:.85rem;font-weight:bold;margin-bottom:2px}
+.form.print{--cell:28px;column-gap:2px;row-gap:2px;margin:0}
+.form.print .cell{border:2px solid #333;background:#fff;border-radius:3px;cursor:default;font-size:20px}
+.form.print .cell.p0,.form.print .cell.p1{border:1.5px solid #666}
+.form.print .digit{font-size:22px}
+.form.print .hline{border-top-width:3px}
+
+/* アニメーション */
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes spin{0%{transform:rotate(-200deg) scale(.2);opacity:0}100%{transform:rotate(0) scale(1);opacity:1}}
+
+/* 印刷 */
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff;font-size:12pt}
+  .screen{display:none!important}
+  #screen-print{display:block!important;padding:0;max-width:none}
+  .noprint{display:none!important}
+  .psheet{padding:0;margin:0;border-radius:0}
+  .pgrid{grid-template-columns:repeat(3,1fr);gap:7mm 5mm}
+  .pitem{border:1px dashed #aaa;padding:3mm}
+  .form.print{--cell:8.5mm;column-gap:.6mm;row-gap:.8mm}
+  .form.print .cell{font-size:6mm}
+  .form.print .digit{font-size:6.5mm}
+  .ansPage{break-before:page}
+}
