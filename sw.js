@@ -1,6 +1,6 @@
 // オフライン用 Service Worker
 // ファイルを更新して公開したら、下の VERSION の数字を1つ上げると、みんなの端末にも新しい版が届きます
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'kakezan-' + VERSION;
 const FILES = [
   './',

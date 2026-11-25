@@ -880,27 +880,36 @@
     sheet.innerHTML = '';
     const title = 'かけ算の筆算（' + TYPE_LABEL[settings.type] + '）';
 
-    function page(withAnswer) {
-      const p = el('div', 'psheet' + (withAnswer ? ' ansPage' : ''));
+    // 1枚に入れる問題数：かける数が1けたなら12問（4行）、2けたなら9問（3行）。
+    // ページの切れ目を自分で決めて、問題が途中で切れないようにする
+    const perPage = db === 2 ? 9 : 12;
+    const pages = Math.ceil(probs.length / perPage);
+    const size = Math.ceil(probs.length / pages);
+    const chunks = [];
+    for (let i = 0; i < probs.length; i += size) {
+      chunks.push(probs.slice(i, i + size).map((p, j) => ({ p: p, no: i + j + 1 })));
+    }
+
+    function page(chunk, withAnswer, pi) {
+      const pg = el('div', 'psheet');
       const head = el('div', 'phead');
       const l = el('span');
-      const bt = el('b', null, title + (withAnswer ? ' 【答え】' : ''));
-      l.appendChild(bt);
+      l.appendChild(el('b', null, title + (withAnswer ? ' 【答え】' : '') + (pages > 1 ? '（' + (pi + 1) + '/' + pages + '）' : '')));
       head.appendChild(l);
       if (!withAnswer) head.appendChild(el('span', null, '名前（　　　　　　　　）　　　　日づけ（　　／　　）　　　　　点（　　／' + printN + '）'));
-      p.appendChild(head);
+      pg.appendChild(head);
       const g = el('div', 'pgrid');
-      probs.forEach((pr, i) => {
+      chunk.forEach((c) => {
         const item = el('div', 'pitem');
-        item.appendChild(el('div', 'pnum', '(' + (i + 1) + ')'));
-        item.appendChild(buildForm(pr.a, pr.b, { print: true, fill: withAnswer }));
+        item.appendChild(el('div', 'pnum', '(' + c.no + ')'));
+        item.appendChild(buildForm(c.p.a, c.p.b, { print: true, fill: withAnswer }));
         g.appendChild(item);
       });
-      p.appendChild(g);
-      return p;
+      pg.appendChild(g);
+      return pg;
     }
-    sheet.appendChild(page(false));
-    if ($('#chkAnswer').checked) sheet.appendChild(page(true));
+    chunks.forEach((c, i) => sheet.appendChild(page(c, false, i)));
+    if ($('#chkAnswer').checked) chunks.forEach((c, i) => sheet.appendChild(page(c, true, i)));
   }
 
   function openPrint() {

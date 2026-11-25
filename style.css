@@ -188,7 +188,9 @@ h2.sec{font-size:1.1rem;margin:0 0 8px;color:#7a5b1f}
   .form.print{--cell:8.5mm;column-gap:.6mm;row-gap:.8mm}
   .form.print .cell{font-size:6mm}
   .form.print .digit{font-size:6.5mm}
-  .ansPage{break-before:page}
+  .psheet{break-after:page;page-break-after:always}
+  .psheet:last-child{break-after:auto;page-break-after:auto}
+  .pgrid{align-items:start}
 }
 
 /* v2 追加 */
